@@ -1,3 +1,0 @@
-To verify that the postgres-controller pods have started, run:
-
-  kubectl --namespace={{ .Release.Namespace }} get pods -l "app={{ template "postgres-controller.name" . }},release={{ .Release.Name }}"

@@ -2,11 +2,31 @@
 postgres_instances:
   default:
     host: localhost
-    user: postgres
-    password: postgres
+    user: 
+      envFrom:
+        configMapKeyRef:
+          - name: db-credentials
+            namespace: postgres-controller
+            key: user
+    password: 
+      envFrom:
+        secretKeyRef:
+          - name: db-password
+            namespace: postgres-controller
+            key: default
     port: 5432
   instance2:
     host: localhost
-    user: postgres
-    password: postgres
+    user: 
+      envFrom:
+        configMapKeyRef:
+          - name: db-credentials
+            namespace: postgres-controller
+            key: user
+    password:
+      envFrom:
+        secretKeyRef:
+          - name: db-password
+            namespace: postgres-controller
+            key: instance2
     port: 5432

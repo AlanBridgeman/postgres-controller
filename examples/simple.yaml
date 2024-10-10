@@ -3,9 +3,12 @@ kind: PostgresDatabase
 metadata:
   name: app3
 spec:
-  dbName: db3
-  dbRoleName: user3
-  dbRolePassword: swordfish
+  dbName: 
+    value: db3
+  dbRoleName: 
+    value: user3
+  dbRolePassword: 
+    value: swordfish
   onDeletion:
     # Whether to drop the databse when the resource is deleted
     dropDB: false
