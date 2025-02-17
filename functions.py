@@ -413,7 +413,7 @@ def onCreateEvent(spec, cur, db_credentials):
         return
     
     if ('dbExtensions' in spec or 'extraSQL' in spec) and not db_created:
-        logger.info('Ingoring extra SQL commands dbName {0} as it is already created'.format(spec['dbName']))
+        logger.info('Ignoring extra SQL commands dbName {0} as it is already created'.format(spec['dbName']))
     elif ('dbExtensions' in spec or 'extraSQL' in spec) and db_created:
         user_credentials = {
             **db_credentials,
@@ -473,12 +473,12 @@ def process_event(crds: client.CustomObjectsApi, obj: dict, event_type: str, run
 
     logger = logging.LoggerAdapter(logging.getLogger(), {'resource_name': k8s_resource_name})
 
-    logger.debug('Processing event {0}: {1}'.format(event_type, json.dumps(obj, indent=1)))
+    logger.debug('Processing event {0}: Metadata: {1}, Spec: {2}'.format(event_type, str(metadata), str(spec)))
 
     # Don't process if the event type is MODIFIED as it's not supported
-    if event_type == 'MODIFIED':
-        logger.debug('Ignoring modification for DB {0}, not supported'.format(spec['dbName']))
-        return
+    #if event_type == 'MODIFIED':
+    #    logger.debug('Ignoring modification for DB {0}, not supported'.format(spec['dbName']))
+    #    return
     
     # Get the database credentials from the controller's configuration
     db_credentials = runtime_config.get_credentials(instance_id=spec.get('dbInstanceId'))
@@ -489,17 +489,17 @@ def process_event(crds: client.CustomObjectsApi, obj: dict, event_type: str, run
         return
 
     try:
-        logger.debug('Connecting to DB instance {0}'.format(spec.get('dbInstanceId')))
+        logger.debug('Connecting to DB instance with credentials {0}'.format(str(db_credentials)))
         conn = psycopg2.connect(**db_credentials)
         cur = conn.cursor()
         conn.set_session(autocommit=True)
+        if event_type == 'DELETED':
+            onDeleteEvent(spec, cur)
+        elif event_type == 'ADDED':
+            onCreateEvent(spec, cur, db_credentials)
     except Exception as e:
-        logger.error('Error when connecting to DB instance {0}: {1}'.format(spec.get('dbInstanceId'), e))
+        logger.error('Error when connecting to DB instance with credentials {0}: {1}'.format(str(db_credentials), e))
         return
-    
-    if event_type == 'DELETED':
-        onDeleteEvent(spec, cur)
-    elif event_type == 'ADDED':
-        onCreateEvent(spec, cur, db_credentials)
-
-    cur.close()
+    finally:
+        # We want to close the connection regardless of what happens
+        cur.close()
